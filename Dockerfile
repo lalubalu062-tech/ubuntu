@@ -1,24 +1,28 @@
-FROM ubuntu:latest
+# Base image
+FROM ubuntu:22.04
 
-# Basic tools aur sudo install karein
-RUN apt-get update && apt-get install -y \
-    sudo \
-    python3 \
-    python3-pip \
-    curl \
-    wget \
-    nano \
-    && rm -rf /var/lib/apt/lists/*
+# Disable interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Naya user 'jeet22' banayein aur password 'jeet22' set karein
-RUN useradd -m -s /bin/bash jeet22 && \
-    echo "jeet22:jeet22" | chpasswd && \
-    usermod -aG sudo jeet22
+# 1. Install SSH Server aur zaroori tools (Wine/Chrome hata diya)
+RUN apt-get update && \
+    apt-get install -y sudo openssh-server wget curl p7zip-full python3 python3-pip nano && \
+    apt-get clean
 
-# Container start hone par default user jeet22 set karein
-USER jeet22
-WORKDIR /home/jeet22
+# SSH daemon ke chalne ke liye zaroori folder
+RUN mkdir /var/run/sshd
 
-# Container ko background me chalte rahne ke liye command
-CMD ["tail", "-f", "/dev/null"]
+# 2. Create user (Username: jeet, Password: password123)
+RUN useradd -m -s /bin/bash jeet && \
+    echo "jeet:password123" | chpasswd && \
+    usermod -aG sudo jeet
 
+# 3. Termius me password se login karne ke liye SSH configuration update karein
+RUN sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+# 4. SSH Port 22 Expose karein
+EXPOSE 22
+
+# 5. SSH server ko foreground me chalayein (Ye container ko 24/7 zinda rakhega)
+CMD ["/usr/sbin/sshd", "-D"]
