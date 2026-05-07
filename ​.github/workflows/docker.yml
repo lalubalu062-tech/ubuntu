@@ -1,0 +1,28 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main # Agar aapki branch ka naam 'master' hai, toh ise master kar dein
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          # Yahan aapki image ka naam set hoga (e.g., aapka_username/ubuntu-jeet:latest)
+          tags: ${{ secrets.DOCKER_USERNAME }}/ubuntu-jeet:latest
